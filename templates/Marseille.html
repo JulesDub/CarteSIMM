@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Styling clusters</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+  <!-- Load Leaflet from CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+
+  <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet@3.0.1/dist/esri-leaflet.js"
+    integrity="sha512-JmpptMCcCg+Rd6x0Dbg6w+mmyzs1M7chHCd9W8HPovnImG2nLAQWn3yltwxXRM7WjKKFFHOAKjjF2SC4CgiFBg=="
+    crossorigin=""></script>
+
+  <!-- Load Leaflet MarkerCluster and Esri Leaflet Cluster from CDN -->
+  <link rel="stylesheet" type="text/css"
+    href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+    integrity="sha512-BBToHPBStgMiw0lD4AtkRIZmdndhB6aQbXpX7omcrXeG2PauGBl2lzq2xUZTxaLxYz5IDHlmneCZ1IJ+P3kYtQ=="
+    crossorigin="">
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
+    integrity="sha512-RLEjtaFGdC4iQMJDbMzim/dOvAu+8Qp9sw7QE4wIMYcg2goVoivzwgSZq9CsIxp4xKAZPKh5J2f2lOko2Ze6FQ=="
+    crossorigin="">
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"
+    integrity="sha512-MQlyPV+ol2lp4KodaU/Xmrn+txc1TP15pOBF/2Sfre7MRsA/pB4Vy58bEqe9u7a7DczMLtU5wT8n7OblJepKbg=="
+    crossorigin=""></script>
+  <script src="https://unpkg.com/esri-leaflet-cluster@2.1.0/dist/esri-leaflet-cluster.js"
+    integrity="sha512-fEdNFHisleVtEYdLhW4Z2RsR7TN6hLutE/+O4D+skfTNY2rlHm8HOZARPWkdrFFy/+i2KjFxcZAKTUWaVfbV0g=="
+    crossorigin=""></script>
+
+  <style>
+    body { margin:0; padding:0; }
+    #map { position: absolute; top:0; bottom:0; right:0; left:0; }
+  </style>
+</head>
+<body>
+
+<style>
+  .cluster {
+    background: #2d84c8;
+    border-radius: 50%;
+    text-align: center;
+    color: white;
+    font-weight: 700;
+    border: 1px solid #2d84c8;
+    font-family: monospace;
+  }
+
+  .cluster:before {
+    content: ' ';
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+    top: 1px;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
+    border: 1px solid white;
+  }
+
+  .digits-1 {
+    font-size: 14px;
+    height: 28px;
+    width: 28px;
+    line-height: 28px;
+    margin-top: -14px;
+    margin-left: -14px;
+  }
+
+  .digits-2 {
+    font-size: 16px;
+    height: 34px;
+    width: 34px;
+    line-height: 35px;
+    margin-top: -17px;
+    margin-left: -17px;
+  }
+
+  .digits-2:before {
+    border-width: 2px;
+  }
+
+  .digits-3 {
+    font-size: 18px;
+    height: 48px;
+    width: 47px;
+    line-height: 47px;
+    border-width: 3px;
+    margin-top: -24px;
+    margin-left: -24px;
+  }
+
+  .digits-3:before {
+    border-width: 3px;
+  }
+
+  .digits-4 {
+    font-size: 18px;
+    height: 58px;
+    width: 58px;
+    line-height: 57px;
+    border-width: 4px;
+    margin-top: -29px;
+    margin-left: -29px;
+  }
+
+  .digits-4:before {
+    border-width: 4px;
+  }
+</style>
+
+<div id="map"></div>
+
+<script>
+  var map = L.map('map').setView([0, 0], 2);
+
+  // Add ArcGIS Online basemap
+  L.esri.basemapLayer('Gray').addTo(map);
+
+  // create a new cluster layer (new syntax at 2.0.0)
+  var earthquakes = L.esri.Cluster.featureLayer({
+    url: 'https://sampleserver6.arcgisonline.com/arcgis/rest/services/Earthquakes_Since1970/MapServer/0',
+    spiderfyOnMaxZoom: false,
+    removeOutsideVisibleBounds: true,
+    disableClusteringAtZoom: 8,
+    // this function defines how the icons
+    // representing clusters are created
+    iconCreateFunction: function (cluster) {
+      // get the number of items in the cluster
+      var count = cluster.getChildCount();
+
+      // figure out how many digits long the number is
+      var digits = (count + '').length;
+
+      // Return a new L.DivIcon with our classes so we can
+      // style them with CSS. Take a look at the CSS in
+      // the <head> to see these styles. You have to set
+      // iconSize to null if you want to use CSS to set the
+      // width and height.
+      return L.divIcon({
+        html: count,
+        className: 'cluster digits-' + digits,
+        iconSize: null
+      });
+    },
+    // This function defines how individual markers
+    // are created. You can see we are using the
+    // value of the "magnitude" field to set the symbol
+    pointToLayer: function (geojson, latlng) {
+      var magnitude = (geojson.properties.magnitude);
+      var earthquakeSymbol = '';
+
+      if (!magnitude) {
+        earthquakeSymbol = 'https://esri.github.io/esri-leaflet/img/earthquake-icon.png';
+      } else if (magnitude <= 4.999) {
+        earthquakeSymbol = 'https://esri.github.io/esri-leaflet/img/yellow-triangle.png';
+      } else if (magnitude >= 5 && magnitude <= 6.999) {
+        earthquakeSymbol = 'https://esri.github.io/esri-leaflet/img/orange-triangle.png';
+      } else if (magnitude >= 7) {
+        earthquakeSymbol = 'https://esri.github.io/esri-leaflet/img/red-triangle.png';
+      }
+
+      var mapIcon = L.icon({
+        iconUrl: earthquakeSymbol,
+        iconSize: [20, 20]
+      });
+
+      return L.marker(latlng, {
+        icon: mapIcon
+      });
+    }
+  }).addTo(map);
+
+  earthquakes.bindPopup(function (layer) {
+    return L.Util.template('Magnitude <strong>{magnitude}</strong> earthquake', layer.feature.properties);
+  });
+</script>
+
+</body>
+</html>
